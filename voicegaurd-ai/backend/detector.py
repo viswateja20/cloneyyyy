@@ -8,7 +8,7 @@ We are NOT training anything here. We are loading a model that has already
 been trained by someone else on real vs. fake/synthetic speech, and just
 running inference (prediction) on our own audio clips.
 
-Model used: MelodyMachine/Deepfake-audio-detection-V2
+Model used: MODEL_NAME = "HyperMoon/wav2vec2-base-960h-finetuned-deepfake"
   - A Wav2Vec2-based binary classifier: "real" (bonafide) vs "fake" (spoof/synthetic)
   - Runs fine on CPU (no GPU required), just slower than GPU.
 
