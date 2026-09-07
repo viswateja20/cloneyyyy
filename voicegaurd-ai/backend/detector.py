@@ -21,8 +21,7 @@ import torch
 import librosa
 from transformers import Wav2Vec2Processor, Wav2Vec2ForSequenceClassification
 
-MODEL_NAME = "MelodyMachine/Deepfake-audio-detection-V2"
-
+MODEL_NAME = "MelodyMachine/Deepfake-audio-detection-V2"MODEL_NAME = "HyperMoon/wav2vec2-base-960h-finetuned-deepfake"
 # Some fake-detection models label classes as 0=fake,1=real or vice versa.
 # We check model.config.id2label at load time and adapt automatically
 # instead of hardcoding it, so this keeps working even if you swap models.
