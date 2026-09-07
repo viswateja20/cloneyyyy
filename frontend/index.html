@@ -16,6 +16,10 @@ Index · HTML
   }
   h1 { color: #4fd1c5; }
   .card {
+    <div class="metric">
+  <div class="label">Voice Classification</div>
+  <div class="value" id="voiceTypeValue">--</div>
+</div>
     background: #161b22;
     border-radius: 16px;
     padding: 30px;
@@ -86,6 +90,7 @@ function logLine(text) {
 }
  
 async function analyzeNow() {
+  riskEl.className = "value risk-" + data.risk_level;
   const fileInput = document.getElementById("audioInput");
   if (!fileInput.files.length) {
     logLine("No audio file selected.");
@@ -113,6 +118,15 @@ async function analyzeNow() {
     const riskEl = document.getElementById("riskValue");
     riskEl.textContent = data.risk_level;
     riskEl.className = "value risk-" + data.risk_level;
+    const voiceTypeEl = document.getElementById("voiceTypeValue");
+
+voiceTypeEl.textContent = data.voice_type;
+
+if (data.voice_type === "CLONED VOICE") {
+  voiceTypeEl.style.color = "#f85149";
+} else {
+  voiceTypeEl.style.color = "#3fb950";
+}
  
     logLine(`Clone: ${data.clone_probability_percent}% | Risk: ${data.risk_level}`);
  
