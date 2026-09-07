@@ -1,0 +1,140 @@
+
+
+Index · HTML
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>VoiceGuard AI - Live Risk Dashboard</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #0d1117;
+    color: #ffffff;
+    text-align: center;
+    padding: 40px;
+  }
+  h1 { color: #4fd1c5; }
+  .card {
+    background: #161b22;
+    border-radius: 16px;
+    padding: 30px;
+    max-width: 420px;
+    margin: 30px auto;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+  }
+  .metric { margin: 18px 0; text-align: left; }
+  .label { font-size: 13px; color: #8b949e; text-transform: uppercase; }
+  .value { font-size: 32px; font-weight: bold; }
+  .bar-bg { background: #30363d; border-radius: 6px; height: 8px; margin-top: 6px; }
+  .bar-fill { height: 8px; border-radius: 6px; transition: width 0.4s ease; }
+  .risk-LOW { color: #3fb950; }
+  .risk-MEDIUM { color: #d29922; }
+  .risk-HIGH { color: #f85149; }
+  input[type="file"] { margin: 10px 0; }
+  button {
+    background: #238636; color: white; border: none;
+    padding: 10px 18px; border-radius: 8px; cursor: pointer; font-size: 14px;
+  }
+  button:hover { background: #2ea043; }
+  #log {
+    text-align: left; max-width: 420px; margin: 20px auto;
+    font-family: monospace; font-size: 12px; color: #58a6ff;
+    max-height: 150px; overflow-y: auto;
+  }
+</style>
+</head>
+<body>
+ 
+<h1>🛡️ VoiceGuard AI — Live Risk Monitoring</h1>
+<p>Upload a short audio clip (3-5 sec) to simulate a live call chunk being analyzed.</p>
+ 
+<input type="file" id="audioInput" accept="audio/*"><br>
+<button onclick="analyzeNow()">Analyze This Clip</button>
+<label style="display:block; margin-top:10px; font-size: 13px;">
+  <input type="checkbox" id="autoPoll"> Auto-analyze every 4 seconds (simulated live call)
+</label>
+ 
+<div class="card">
+  <div class="metric">
+    <div class="label">Authenticity</div>
+    <div class="value" id="authValue">--%</div>
+    <div class="bar-bg"><div class="bar-fill" id="authBar" style="width:0%; background:#3fb950;"></div></div>
+  </div>
+  <div class="metric">
+    <div class="label">Clone Probability</div>
+    <div class="value" id="cloneValue">--%</div>
+    <div class="bar-bg"><div class="bar-fill" id="cloneBar" style="width:0%; background:#f85149;"></div></div>
+  </div>
+  <div class="metric">
+    <div class="label">Risk Level</div>
+    <div class="value" id="riskValue">--</div>
+  </div>
+</div>
+ 
+<div id="log"></div>
+ 
+<script>
+const BACKEND_URL = "http://localhost:5000/analyze";
+let pollTimer = null;
+ 
+function logLine(text) {
+  const log = document.getElementById("log");
+  const line = document.createElement("div");
+  line.textContent = `[${new Date().toLocaleTimeString()}] ${text}`;
+  log.prepend(line);
+}
+ 
+async function analyzeNow() {
+  const fileInput = document.getElementById("audioInput");
+  if (!fileInput.files.length) {
+    logLine("No audio file selected.");
+    return;
+  }
+ 
+  const formData = new FormData();
+  formData.append("audio", fileInput.files[0]);
+ 
+  try {
+    const response = await fetch(BACKEND_URL, { method: "POST", body: formData });
+    const data = await response.json();
+ 
+    if (data.error) {
+      logLine("Error: " + data.error);
+      return;
+    }
+ 
+    document.getElementById("authValue").textContent = data.authenticity_percent + "%";
+    document.getElementById("authBar").style.width = data.authenticity_percent + "%";
+ 
+    document.getElementById("cloneValue").textContent = data.clone_probability_percent + "%";
+    document.getElementById("cloneBar").style.width = data.clone_probability_percent + "%";
+ 
+    const riskEl = document.getElementById("riskValue");
+    riskEl.textContent = data.risk_level;
+    riskEl.className = "value risk-" + data.risk_level;
+ 
+    logLine(`Clone: ${data.clone_probability_percent}% | Risk: ${data.risk_level}`);
+ 
+    // This is the hook point for your n8n WhatsApp alert:
+    // if (data.risk_level === "HIGH") { triggerN8nWebhook(data); }
+ 
+  } catch (err) {
+    logLine("Could not reach backend. Is app.py running on port 5000?");
+  }
+}
+ 
+document.getElementById("autoPoll").addEventListener("change", (e) => {
+  if (e.target.checked) {
+    pollTimer = setInterval(analyzeNow, 4000);
+    logLine("Auto-analyze started (every 4s).");
+  } else {
+    clearInterval(pollTimer);
+    logLine("Auto-analyze stopped.");
+  }
+});
+</script>
+ 
+</body>
+</html>
+ 
