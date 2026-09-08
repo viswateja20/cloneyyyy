@@ -8,6 +8,32 @@ Index · HTML
 <title>VoiceGuard AI - Live Risk Dashboard</title>
 <style>
   body {
+    <!-- OTP LOGIN -->
+<div id="otpSection" class="card">
+  <h2>📱 Phone Verification</h2>
+
+  <input
+    type="tel"
+    id="mobileInput"
+    placeholder="Enter 10-digit mobile number"
+    maxlength="10"
+  >
+
+  <button id="btnSendOtp">Send OTP</button>
+
+  <div id="otpVerifySection" style="display:none; margin-top:20px;">
+    <p id="otp-mobile-display"></p>
+
+    <input
+      type="text"
+      id="otpInput"
+      placeholder="Enter OTP"
+      maxlength="6"
+    >
+
+    <button id="btnVerify">Verify OTP</button>
+  </div>
+</div>
     font-family: Arial, sans-serif;
     background: #0d1117;
     color: #ffffff;
@@ -16,6 +42,37 @@ Index · HTML
   }
   h1 { color: #4fd1c5; }
   .card {
+    <div class="card">
+
+  <div class="metric">
+    <div class="label">Voice Classification</div>
+    <div class="value" id="voiceTypeValue">--</div>
+  </div>
+
+  <div class="metric">
+    <div class="label">Authenticity</div>
+    <div class="value" id="authValue">--%</div>
+    <div class="bar-bg">
+      <div class="bar-fill" id="authBar"
+           style="width:0%; background:#3fb950;"></div>
+    </div>
+  </div>
+
+  <div class="metric">
+    <div class="label">Clone Probability</div>
+    <div class="value" id="cloneValue">--%</div>
+    <div class="bar-bg">
+      <div class="bar-fill" id="cloneBar"
+           style="width:0%; background:#f85149;"></div>
+    </div>
+  </div>
+
+  <div class="metric">
+    <div class="label">Risk Level</div>
+    <div class="value" id="riskValue">--</div>
+  </div>
+
+</div>
     <div class="metric">
   <div class="label">Voice Classification</div>
   <div class="value" id="voiceTypeValue">--</div>
@@ -79,8 +136,74 @@ Index · HTML
 <div id="log"></div>
  
 <script>
-const BACKEND_URL = "http://localhost:5000/analyze";
+const BACKEND_URL = "http://localhost:5000";
 let pollTimer = null;
+  const state = {
+  mobile: ""
+};
+
+const mobileInput = document.getElementById("mobileInput");
+const btnSendOtp = document.getElementById("btnSendOtp");
+
+btnSendOtp.addEventListener("click", async () => {
+
+  state.mobile = mobileInput.value.trim();
+
+  if (!/^\d{10}$/.test(state.mobile)) {
+    alert("Please enter a valid 10-digit mobile number.");
+    return;
+  }
+
+  const res = await fetch(BACKEND_URL + "/send-otp", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      phone: state.mobile
+    })
+  });
+
+  if (!res.ok) {
+    alert("Could not send OTP");
+    return;
+  }
+
+  document.getElementById("otp-mobile-display").textContent =
+    "+91 " +
+    state.mobile.slice(0, 2) +
+    "xxx xx" +
+    state.mobile.slice(-2);
+
+  document.getElementById("otpVerifySection").style.display = "block";
+
+  document.getElementById("otpInput").focus();
+});
+  btnVerify.addEventListener("click", async () => {
+
+  const code = document.getElementById("otpInput").value.trim();
+
+  const res = await fetch(BACKEND_URL + "/verify-otp", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      phone: state.mobile,
+      otp: code
+    })
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    alert(err.error || "Incorrect code");
+    return;
+  }
+
+  alert("Phone verified successfully!");
+
+  document.getElementById("otpSection").style.display = "none";
+});
  
 function logLine(text) {
   const log = document.getElementById("log");
