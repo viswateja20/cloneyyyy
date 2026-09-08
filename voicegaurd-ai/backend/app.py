@@ -15,6 +15,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 from detector import analyze_audio
+from auth import generate_otp, verify_otp
 
 
 app = Flask(__name__)
@@ -102,6 +103,92 @@ def analyze():
         if os.path.exists(tmp_path):
 
             os.remove(tmp_path)
+            from flask import Flask, request, jsonify
+from flask_cors import CORS
+from detector import analyze_audio
+from auth import generate_otp, verify_otp
+
+app = Flask(__name__)
+CORS(app)
+
+
+@app.route("/", methods=["GET"])
+def health_check():
+    return jsonify({
+        "status": "VoiceGuard AI backend is running"
+    })
+
+
+@app.route("/analyze", methods=["POST"])
+def analyze():
+
+    # your existing analyze code here
+    # ...
+    
+    return jsonify(result)
+
+
+# =========================================================
+# OTP AUTHENTICATION
+# =========================================================
+
+@app.route("/send-otp", methods=["POST"])
+def send_otp():
+
+    data = request.get_json(silent=True) or {}
+    phone = data.get("phone")
+
+    if not phone or len(phone) != 10 or not phone.isdigit():
+        return jsonify({
+            "error": "Valid 10-digit phone number required."
+        }), 400
+
+    code = generate_otp(phone)
+
+    # Development only
+    print(f"[DEV] OTP for {phone}: {code}")
+
+    return jsonify({
+        "status": "OTP sent"
+    })
+
+
+@app.route("/verify-otp", methods=["POST"])
+def verify_otp_route():
+
+    data = request.get_json(silent=True) or {}
+
+    phone = data.get("phone")
+    code = data.get("otp")
+
+    if not phone or not code:
+        return jsonify({
+            "error": "phone and otp are required."
+        }), 400
+
+    ok, message = verify_otp(phone, code)
+
+    if not ok:
+        return jsonify({
+            "error": message
+        }), 400
+
+    return jsonify({
+        "status": "verified"
+    })
+
+
+# =========================================================
+# RUN SERVER
+# =========================================================
+
+if __name__ == "__main__":
+
+    app.run(
+        host="0.0.0.0",
+        port=5000,
+        debug=True
+    )
 
 
 if __name__ == "__main__":
